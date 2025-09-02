@@ -92,7 +92,6 @@ def parse_args():
 def main():
     global SCRIPTNAME
     SCRIPTNAME = "ptkibana"
-    requests.packages.urllib3.disable_warnings()
     args = parse_args()
     script = PtKibana(args)
     script.run()
