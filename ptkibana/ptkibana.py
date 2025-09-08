@@ -268,6 +268,7 @@ def get_help():
             ["-r",  "--redirects",              "",                 "Follow redirects (default False)"],
             ["-C",  "--cache",                  "",                 "Cache HTTP communication (load from tmp in future)"],
             ["-v",  "--version",                "",                 "Show script version and exit"],
+            ["-vv", "--verbose",                "",                 "Enable verbose mode"],
             ["-h",  "--help",                   "",                 "Show this help message and exit"],
             ["-j",  "--json",                   "",                 "Output in JSON format"],
         ]
@@ -310,6 +311,7 @@ def parse_args():
     parser.add_argument("-r",  "--redirects",      action="store_true")
     parser.add_argument("-C",  "--cache",          action="store_true")
     parser.add_argument("-j",  "--json",           action="store_true")
+    parser.add_argument("-vv", "--verbose",        action="store_true")
     parser.add_argument("-v",  "--version",        action='version', version=f'{SCRIPTNAME} {__version__}')
     parser.add_argument("--socket-address",          type=str, default=None)
     parser.add_argument("--socket-port",             type=str, default=None)
