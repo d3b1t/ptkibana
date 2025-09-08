@@ -88,6 +88,24 @@ class PtKibana:
             base_response=self.base_response
         ).run()
 
+
+    def _check_https(self) -> bool:
+        """
+        Checks to see if we're being redirected to the HTTPS version of the page
+        :return:
+        """
+        response = self.base_response
+
+        return "https://" in response.headers.get('Location', 'unknown') or "https" in response.text.lower()
+
+
+    def _try_https(self) -> bool:
+        self.args.url = f"https://{self.args.url[7:]}"
+        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
+
+        return self.base_response.status_code == 200
+
+
     def _fetch_initial_response(self) -> None:
         """
         Sends initial HTTP requests to the requested URL. Follows redirects
@@ -96,14 +114,16 @@ class PtKibana:
 
         try:
             # Send request to user specified page via <args.url>
-            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
+            if "/login?next=%2F" not in self.args.url:
+                self.args.url += "login?next=%2F"
 
-            """
+            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
+
             if 300 <= self.base_response.status_code < 400:
                 if not self._check_https():
                     self.ptjsonlib.end_error(f"Redirect to URL: {self.base_response.headers.get('Location', 'unknown')}", self.args.json)
-            """
-            if self.base_response.status_code != 200:
+
+            if self.base_response.status_code != 200 and not self._try_https():
                 self.ptjsonlib.end_error(f"Webpage returns status code: {self.base_response.status_code}", self.args.json)
 
         except requests.exceptions.RequestException as error_msg:
@@ -255,6 +275,29 @@ def get_help():
 
 
 def parse_args():
+    def _check_url(url: str) -> str:
+        """
+        This method edits the provided URL.
+
+        Adds '\\http://' to the begging of the URL if no protocol is provided
+
+        www.example.com:9200 -> \\http://www.example.com:9200
+
+        Doesn't do anything if a protocol is provided
+
+        Also adds trailing '/' if missing
+
+        :return: Edited URL
+        """
+
+        if "http://" not in url and "https://" not in url:
+            url = "http://" + url
+
+        if url[-1] != '/':
+            url += '/'
+
+        return url
+
     parser = argparse.ArgumentParser(add_help="False", description=f"{SCRIPTNAME} <options>")
     parser.add_argument("-u",  "--url",            type=str, required=True)
     parser.add_argument("-ts", "--tests",          type=lambda s: s.lower(), nargs="+")
@@ -281,8 +324,7 @@ def parse_args():
     if args.proxy:
         args.proxy = {"http": args.proxy, "https": args.proxy}
 
-    if args.url[-1] != '/':
-        args.url += '/'
+    args.url = _check_url(args.url)
 
     args.headers = ptnethelper.get_request_headers(args)
 
