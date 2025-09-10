@@ -89,19 +89,11 @@ class PtKibana:
         ).run()
 
 
-    def _check_https(self) -> bool:
-        """
-        Checks to see if we're being redirected to the HTTPS version of the page
-        :return:
-        """
-        response = self.base_response
-
-        return "https://" in response.headers.get('Location', 'unknown') or "https" in response.text.lower()
-
-
     def _try_https(self) -> bool:
         self.args.url = f"https://{self.args.url[7:]}"
-        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
+        ptprint(f"Trying to connect with HTTPS at: {self.args.url}", "ADDITIONS",
+                self.args.verbose, indent=4, colortext=True)
+        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
 
         return self.base_response.status_code == 200
 
@@ -114,20 +106,16 @@ class PtKibana:
 
         try:
             # Send request to user specified page via <args.url>
-            if "/login?next=%2F" not in self.args.url:
-                self.args.url += "login?next=%2F"
-
-            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
-
-            if 300 <= self.base_response.status_code < 400:
-                if not self._check_https():
-                    self.ptjsonlib.end_error(f"Redirect to URL: {self.base_response.headers.get('Location', 'unknown')}", self.args.json)
+            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
 
             if self.base_response.status_code != 200 and not self._try_https():
                 self.ptjsonlib.end_error(f"Webpage returns status code: {self.base_response.status_code}", self.args.json)
 
         except requests.exceptions.RequestException as error_msg:
-            self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg, condition=self.args.json)
+            ptprint(f"Error retrieving initial response: {error_msg}.", "ADDITIONS",
+                    self.args.verbose, indent=4, colortext=True)
+            if not self._try_https():
+                self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg, condition=self.args.json)
 
 
     def run_single_module(self, module_name: str) -> None:
