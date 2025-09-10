@@ -28,40 +28,19 @@ class HttpTest:
         self.helpers.print_header(__TESTLABEL__)
 
 
-    def _check_http(self, url) -> None:
-        """
-        This method checks to see if the provided URL is really running on HTTP by sending a GET request and looking
-        at the response
-
-        If the server responds with an HTTP 200 OK, we print a message and add a vulnerability to the JSON output
-
-        If not, we print a message that the server is running HTTPS
-
-        :param url: Host to test
-        :return:
-        """
-
-        if self.base_response.status_code == HTTPStatus.OK:
-            ptprint(f"The host is running on HTTP", "VULN", not self.args.json, indent=4)
-            self.ptjsonlib.add_vulnerability("PTV-KIBANA-MISC-HTTP")
-        else:
-            ptprint(f"The host is not running on HTTP", "OK", not self.args.json, indent=4)
-
-
     def run(self) -> None:
         """
         Executes the Kibana HTTP/S test
 
-        Edits the URL if necessary and checks if the host is really running on HTTP or not
-
-        If we're provided with an HTTPS URL, we just print a message that says the host is running on HTTPS
+        Checks to see if the URL we have sent the initial request contains http:// or https:// in the URL
         """
 
-        if "http://" in self.args.url:
-            self._check_http(self.args.url)
+        if "https://" in self.args.url:
+            ptprint(f"The host is running on HTTPS", "OK", not self.args.json, indent=4)
             return
 
-        ptprint(f"The host is not running on HTTP", "OK", not self.args.json, indent=4)
+        ptprint(f"The host is running on HTTP", "VULN", not self.args.json, indent=4)
+        self.ptjsonlib.add_vulnerability("PTV-KIBANA-MISC-HTTP")
 
 
 def run(args, ptjsonlib, helpers, http_client, base_response):
