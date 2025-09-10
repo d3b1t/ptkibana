@@ -41,7 +41,7 @@ class HttpTest:
         """
 
         for endpoint in ["app/home", "app/kibana"]:
-            ptprint(f"Accesing {self.args.url}{endpoint}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
+            ptprint(f"Accessing {self.args.url}{endpoint}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
             try:
                 response = self.http_client.send_request(url=self.args.url+endpoint, method="GET", headers=self.args.headers, allow_redirects=False)
