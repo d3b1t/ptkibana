@@ -2,6 +2,11 @@
 
 
 ## PTKIBANA
+Security testing tool for identifying, fingerprinting, and exploiting vulnerabilities in Kibana instances.  
+The tool:
+- Identifies whether or not Kibana is running on a host
+- Identifies whether it is running on HTTP or HTTPS
+- Identifies whether or not it has authentication enabled
 
 ## Installation
 
@@ -33,6 +38,7 @@ ptkibana -u htttps://www.example.com/
 ```
 -u  --url         <url>           Connect to URL
 -p  --proxy       <proxy>         Set proxy (e.g. http://127.0.0.1:8080)
+-t  --threads     <threads>       Set thread count (default 10)
 -T  --timeout                     Set timeout (default 10)
 -c  --cookie      <cookie>        Set cookie
 -a  --user-agent  <a>             Set User-Agent header
@@ -42,6 +48,14 @@ ptkibana -u htttps://www.example.com/
 -v  --version                     Show script version and exit
 -h  --help                        Show this help message and exit
 -j  --json                        Output in JSON format
+-ts --tests       <test>          Specify one or more tests to perform:
+                  AUTH
+                  HTTPS
+                  IS_KIBANA
+-vv --verbose                     Enable verbose mode
+-U  --user                        Set user to authenticate as
+-P  --password                    Set password to authenticate with
+-A  --api-key                     Set API key to authenticate with
 
 ```
 
@@ -66,4 +80,5 @@ You are only allowed to run the tool against the websites which
 you have been given permission to pentest. We do not accept any
 responsibility for any damage/harm that this application causes to your
 computer, or your network. Penterep is not responsible for any illegal
+
 or malicious use of this code. Be Ethical!
