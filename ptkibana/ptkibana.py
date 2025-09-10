@@ -259,6 +259,9 @@ def get_help():
             ["-vv", "--verbose",                "",                 "Enable verbose mode"],
             ["-h",  "--help",                   "",                 "Show this help message and exit"],
             ["-j",  "--json",                   "",                 "Output in JSON format"],
+            ["-U", "--user",                    "",                 "Set user to authenticate as"],
+            ["-P", "--password",                "",                 "Set password to authenticate with"],
+            ["-A", "--api-key",                 "",                 "Set API key to authenticate with"]
         ]
         }]
 
@@ -304,6 +307,9 @@ def parse_args():
     parser.add_argument("--socket-address",          type=str, default=None)
     parser.add_argument("--socket-port",             type=str, default=None)
     parser.add_argument("--process-ident",           type=str, default=None)
+    parser.add_argument("-U", "--user",             type=str, default=None)
+    parser.add_argument("-P", "--password",         type=str, default=None)
+    parser.add_argument("-A", "--api-key",          type=str, default=None)
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)
@@ -316,7 +322,14 @@ def parse_args():
 
     args.url = _check_url(args.url)
 
+    if args.user and args.password:
+        proto = args.url.find("//")+2
+        args.url = f"{args.url[:proto]}{args.user}:{args.password}@{args.url[proto:]}"
+
     args.headers = ptnethelper.get_request_headers(args)
+
+    if args.api_key:
+        args.headers.update({"Authorization": f"ApiKey {args.api_key}"})
 
     ptprinthelper.print_banner(SCRIPTNAME, __version__, args.json)
     return args
