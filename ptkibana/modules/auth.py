@@ -39,6 +39,9 @@ class HttpTest:
 
         The method prints if authentication is enabled/disabled and adds a vulnerability to the JSON output if disabled
         """
+        if (self.args.user and self.args.password) or self.args.api_key:
+            ptprint(f"The host has authentication enabled", "OK", not self.args.json, indent=4)
+            return
 
         for endpoint in ["app/home", "app/kibana", "api/saved_objects/_find"]:
             ptprint(f"Accessing {self.args.url}{endpoint}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
@@ -51,7 +54,7 @@ class HttpTest:
             ptprint(f"Received response code {response.status_code}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
             if response.status_code == HTTPStatus.UNAUTHORIZED or "/login" in response.headers.get("location", "unknown"):
-                ptprint(f"The host has authentication enabled", "VULN", not self.args.json, indent=4)
+                ptprint(f"The host has authentication enabled", "OK", not self.args.json, indent=4)
                 return
 
             if response.status_code == HTTPStatus.OK:
