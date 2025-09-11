@@ -40,7 +40,7 @@ class HttpTest:
         The method prints if authentication is enabled/disabled and adds a vulnerability to the JSON output if disabled
         """
 
-        for endpoint in ["app/home", "app/kibana"]:
+        for endpoint in ["app/home", "app/kibana", "api/saved_objects/_find"]:
             ptprint(f"Accessing {self.args.url}{endpoint}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
             try:
@@ -50,20 +50,18 @@ class HttpTest:
 
             ptprint(f"Received response code {response.status_code}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
-            if response.status_code == HTTPStatus.NOT_FOUND:
-                continue
+            if response.status_code == HTTPStatus.UNAUTHORIZED or "/login" in response.headers.get("location", "unknown"):
+                ptprint(f"The host has authentication enabled", "VULN", not self.args.json, indent=4)
+                return
 
-        if response.status_code == HTTPStatus.UNAUTHORIZED or "/login" in response.headers.get("location", "unknown"):
-            ptprint(f"The host has authentication enabled", "VULN", not self.args.json, indent=4)
+            if response.status_code == HTTPStatus.OK:
+                ptprint(f"The host has authentication disabled", "VULN", not self.args.json, indent=4)
+                self.ptjsonlib.add_vulnerability("PTV-WEB-ELASTIC-AUTH")
+                self.ptjsonlib.add_properties({"authentication": "disabled"})
+                return
 
-        elif response.status_code == HTTPStatus.OK:
-            ptprint(f"The host has authentication disabled", "VULN", not self.args.json, indent=4)
-            self.ptjsonlib.add_vulnerability("PTV-WEB-ELASTIC-AUTH")
-            self.ptjsonlib.add_properties({"authentication": "disabled"})
-
-        else:
-            ptprint(f"Could not determine whether authentication is enabled or disabled", "ERROR",
-                    not self.args.json, indent=4)
+        ptprint(f"Could not determine whether authentication is enabled or disabled", "ERROR",
+                not self.args.json, indent=4)
 
 
 def run(args, ptjsonlib, helpers, http_client, base_response):
