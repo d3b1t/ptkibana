@@ -57,9 +57,12 @@ class PtKibana:
         """Main method"""
 
         self._fetch_initial_response()
-        self._check_if_target_runs_kibana()
 
         tests = self.args.tests or _get_all_available_modules()
+
+        if "_is_kibana" not in tests:
+            self._check_if_target_runs_kibana()
+
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
         self.ptjsonlib.set_status("finished")
