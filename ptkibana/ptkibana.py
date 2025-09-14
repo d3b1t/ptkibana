@@ -35,7 +35,7 @@ from ptlibs.ptprinthelper import ptprint
 from ptlibs.http.http_client import HttpClient
 from helpers.helpers import Helpers
 import requests
-from modules._is_kibana import IsKibana
+from modules.is_kibana import IsKibana
 
 from helpers._thread_local_stdout import ThreadLocalStdout
 
@@ -60,8 +60,10 @@ class PtKibana:
 
         tests = self.args.tests or _get_all_available_modules()
 
-        if "_is_kibana" not in tests:
-            self._check_if_target_runs_kibana()
+        if "is_kibana" in tests:
+            tests.remove("is_kibana")
+
+        self._check_if_target_runs_kibana()
 
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
