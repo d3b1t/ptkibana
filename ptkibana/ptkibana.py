@@ -35,7 +35,7 @@ from ptlibs.ptprinthelper import ptprint
 from ptlibs.http.http_client import HttpClient
 from helpers.helpers import Helpers
 import requests
-from modules._is_kibana import IsKibana
+from modules.is_kibana import IsKibana
 
 from helpers._thread_local_stdout import ThreadLocalStdout
 
@@ -57,9 +57,14 @@ class PtKibana:
         """Main method"""
 
         self._fetch_initial_response()
-        self._check_if_target_runs_kibana()
 
         tests = self.args.tests or _get_all_available_modules()
+
+        if "is_kibana" in tests:
+            tests.remove("is_kibana")
+
+        self._check_if_target_runs_kibana()
+
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
         self.ptjsonlib.set_status("finished")
@@ -89,19 +94,11 @@ class PtKibana:
         ).run()
 
 
-    def _check_https(self) -> bool:
-        """
-        Checks to see if we're being redirected to the HTTPS version of the page
-        :return:
-        """
-        response = self.base_response
-
-        return "https://" in response.headers.get('Location', 'unknown') or "https" in response.text.lower()
-
-
     def _try_https(self) -> bool:
         self.args.url = f"https://{self.args.url[7:]}"
-        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
+        ptprint(f"Trying to connect with HTTPS at: {self.args.url}", "ADDITIONS",
+                self.args.verbose, indent=4, colortext=True)
+        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
 
         return self.base_response.status_code == 200
 
@@ -114,20 +111,16 @@ class PtKibana:
 
         try:
             # Send request to user specified page via <args.url>
-            if "/login?next=%2F" not in self.args.url:
-                self.args.url += "login?next=%2F"
-
-            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=False)
-
-            if 300 <= self.base_response.status_code < 400:
-                if not self._check_https():
-                    self.ptjsonlib.end_error(f"Redirect to URL: {self.base_response.headers.get('Location', 'unknown')}", self.args.json)
+            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
 
             if self.base_response.status_code != 200 and not self._try_https():
                 self.ptjsonlib.end_error(f"Webpage returns status code: {self.base_response.status_code}", self.args.json)
 
         except requests.exceptions.RequestException as error_msg:
-            self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg, condition=self.args.json)
+            ptprint(f"Error retrieving initial response: {error_msg}.", "ADDITIONS",
+                    self.args.verbose, indent=4, colortext=True)
+            if not self._try_https():
+                self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg, condition=self.args.json)
 
 
     def run_single_module(self, module_name: str) -> None:
@@ -271,6 +264,9 @@ def get_help():
             ["-vv", "--verbose",                "",                 "Enable verbose mode"],
             ["-h",  "--help",                   "",                 "Show this help message and exit"],
             ["-j",  "--json",                   "",                 "Output in JSON format"],
+            ["-U", "--user",                    "",                 "Set user to authenticate as"],
+            ["-P", "--password",                "",                 "Set password to authenticate with"],
+            ["-A", "--api-key",                 "",                 "Set API key to authenticate with"]
         ]
         }]
 
@@ -316,6 +312,9 @@ def parse_args():
     parser.add_argument("--socket-address",          type=str, default=None)
     parser.add_argument("--socket-port",             type=str, default=None)
     parser.add_argument("--process-ident",           type=str, default=None)
+    parser.add_argument("-U", "--user",             type=str, default=None)
+    parser.add_argument("-P", "--password",         type=str, default=None)
+    parser.add_argument("-A", "--api-key",          type=str, default=None)
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)
@@ -328,7 +327,14 @@ def parse_args():
 
     args.url = _check_url(args.url)
 
+    if args.user and args.password:
+        proto = args.url.find("//")+2
+        args.url = f"{args.url[:proto]}{args.user}:{args.password}@{args.url[proto:]}"
+
     args.headers = ptnethelper.get_request_headers(args)
+
+    if args.api_key:
+        args.headers.update({"Authorization": f"ApiKey {args.api_key}"})
 
     ptprinthelper.print_banner(SCRIPTNAME, __version__, args.json)
     return args
