@@ -39,35 +39,38 @@ class HttpTest:
         self.ptjsonlib.add_node(json_node)
 
 
-    def _list_plugins(self, data: dict) -> None:
+    def _list_plugins(self, data: dict, id_key: str) -> None:
         """
         This method retrieves available plugins and their status, prints them out and adds them to the JSON output
         """
-        plugins = data.get("status", {}).get("plugins", {})
+        plugins = [plugin for plugin in data.get("status", {}).get("statuses", {}) if "plugin" in plugin.get(id_key, "name")]
 
         if plugins:
             ptprint(f"Found plugins:", "INFO", not self.args.json, indent=4)
             for plugin in plugins:
-                status = plugins.get(plugin).get('level', 'unknown')
-                self._add_to_json({"name": plugin, "status": status}, "swPlugin")
-                ptprint(f"Name: {plugin:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
+                status = plugin.get('state', 'unknown')
+                name = plugin.get(id_key, "").replace("plugin:", "")
+                self._add_to_json({"name": name, "status": status}, "swPlugin")
+                ptprint(f"Name: {name:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
 
         else:
             ptprint(f"Could not retrieve available plugins", "OK", not self.args.json, indent=4)
 
 
-    def _list_core_plugins(self, data: dict) -> None:
+    def _list_core_plugins(self, data: dict, id_key: str) -> None:
         """
         This method retrieves available core plugins and their status, prints them out and adds them to the JSON output
         """
-        cores = data.get("status", {}).get("core", {})
+
+        cores = [core for core in data.get("status", {}).get("statuses", {}) if "core" in core.get(id_key, "")]
 
         if cores:
             ptprint(f"Found core plugins:", "INFO", not self.args.json, indent=4)
             for core in cores:
-                status = cores.get(core).get('level', 'unknown')
-                self._add_to_json({"name": core, "status": status}, "swCorePlugin")
-                ptprint(f"Name: {core:<35} Status: {status:<15}", "INFO",
+                name = core.get(id_key, "").replace("core:", "")
+                status = core.get('state', 'unknown')
+                self._add_to_json({"id": name, "status": status}, "swCorePlugin")
+                ptprint(f"Name: {name:<35} Status: {status:<15}", "INFO",
                         not self.args.json, indent=8)
 
         else:
@@ -80,23 +83,32 @@ class HttpTest:
         """
         os_properties = data.get("metrics", {}).get("os", {})
 
-        if os_properties:
-            ptprint(f"OS properties:", "INFO", not self.args.json, indent=4)
-            ptprint(f"{'Platform:':<41} {os_properties.get('platform', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Release:':<41} {os_properties.get('platformRelease', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Distro:':<41} {os_properties.get('distro', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Distro release:':<41} {os_properties.get('distroRelease', '')}", "INFO", not self.args.json, indent=8)
+        platform = os_properties.get('platform', '')
+        platform_release = os_properties.get('platformRelease', '')
+        distro = os_properties.get('distro', '')
+        distro_release = os_properties.get('distroRelease', '')
 
-            self._add_to_json({
-                    "platform": os_properties.get('platform', ''),
-                    "release": os_properties.get('platformRelease', ''),
-                    "distro": os_properties.get('distro', ''),
-                    "distroRelease": os_properties.get('distroRelease', '')
-                 },
-            "osProperties")
-
-        else:
+        if not any([platform, platform_release, distro_release, distro]):
             ptprint(f"Could not retrieve OS properties", "OK", not self.args.json, indent=4)
+            return
+
+        ptprint(f"OS properties:", "INFO", not self.args.json, indent=4)
+        ptprint(f"{'Platform:':<41} {platform}", "INFO",
+                not self.args.json, indent=8) if platform else None
+        ptprint(f"{'Release:':<41} {platform_release}", "INFO",
+                not self.args.json, indent=8) if platform_release else None
+        ptprint(f"{'Distro:':<41} {distro}", "INFO",
+                not self.args.json, indent=8) if distro else None
+        ptprint(f"{'Distro release:':<41} {distro_release}", "INFO",
+                not self.args.json, indent=8) if distro_release else None
+
+        self._add_to_json({
+                "platform": os_properties.get('platform', ''),
+                "release": os_properties.get('platformRelease', ''),
+                "distro": os_properties.get('distro', ''),
+                "distroRelease": os_properties.get('distroRelease', '')
+             },
+        "osProperties")
 
 
     def _list_kbn_version(self, data: dict) -> None:
@@ -122,12 +134,12 @@ class HttpTest:
         If successful, it prints the information out and adds it to the JSON output.
         """
         try:
-            response = self.http_client.send_request(url=self.args.url+"api/status", method="GET", headers=self.args.headers, follow_redirects=False)
+            response = self.http_client.send_request(url=self.args.url+"api/status?v7format=true", method="GET", headers=self.args.headers, follow_redirects=False)
         except requests.exceptions.RequestException as error_msg:
             self.ptjsonlib.end_error(f"Error retrieving response", details=error_msg, condition=self.args.json)
 
         if response.status_code != HTTPStatus.OK:
-            ptprint("Could not reach /api/status endpoint", "OK", not self.args.json, indent=4)
+            ptprint("Could not reach /api/status?v7format=true endpoint", "OK", not self.args.json, indent=4)
             ptprint(f"Received response:\n{dumps(response.json(), indent=4)}", "ADDITIONS",
                     self.args.verbose, indent=4, colortext=True)
             return
@@ -138,9 +150,11 @@ class HttpTest:
             ptprint(f"Error communicating with API: {error_msg}", "ERROR", not self.args.json, indent=4)
             return
 
+        id_key = "name" if data.get("status", {}).get("statuses", {})[0].get("name", "") else "id"
+
         self._list_kbn_version(data)
-        self._list_core_plugins(data)
-        self._list_plugins(data)
+        self._list_core_plugins(data, id_key)
+        self._list_plugins(data, id_key)
         self._list_os_properties(data)
 
 
