@@ -92,6 +92,7 @@ class PtKibana:
             http_client=self.http_client,
             base_response=self.base_response
         ).run()
+        ptprint(" ", "TEXT", not self.args.json)
 
 
     def _try_https(self) -> bool:
