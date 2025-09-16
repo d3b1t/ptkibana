@@ -53,6 +53,13 @@ class HttpTest:
 
             ptprint(f"Received response code {response.status_code}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
+            if 300 <= response.status_code < 400 and "login" not in response.headers.get("location", "unknown"):
+                try:
+                    response = self.http_client.send_request(url=self.args.url + endpoint, method="GET",
+                                                             headers=self.args.headers, allow_redirects=True)
+                except requests.exceptions.RequestException as error_msg:
+                    self.ptjsonlib.end_error(f"Error retrieving response", details=error_msg, condition=self.args.json)
+
             if response.status_code == HTTPStatus.UNAUTHORIZED or "/login" in response.headers.get("location", "unknown"):
                 ptprint(f"The host has authentication enabled", "OK", not self.args.json, indent=4)
                 return
