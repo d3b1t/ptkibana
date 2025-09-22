@@ -92,13 +92,23 @@ class PtKibana:
             http_client=self.http_client,
             base_response=self.base_response
         ).run()
+        ptprint(" ", "TEXT", not self.args.json)
 
 
     def _try_https(self) -> bool:
-        self.args.url = f"https://{self.args.url[7:]}"
+        if "https://" not in self.args.url:
+            self.args.url = f"https://{self.args.url[7:]}"
+
         ptprint(f"Trying to connect with HTTPS at: {self.args.url}", "ADDITIONS",
                 self.args.verbose, indent=4, colortext=True)
-        self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
+
+        try:
+            self.base_response = self.http_client.send_request(url=self.args.url, method="GET", headers=self.args.headers, allow_redirects=True)
+        except requests.exceptions.RequestException as error_msg:
+            ptprint(f"Error trying to connect with HTTPS: {error_msg}.", "ADDITIONS",
+                    self.args.verbose, indent=4, colortext=True)
+            self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg,
+                                     condition=self.args.json)
 
         return self.base_response.status_code == 200
 

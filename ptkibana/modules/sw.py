@@ -43,12 +43,25 @@ class HttpTest:
         """
         This method retrieves available plugins and their status, prints them out and adds them to the JSON output
         """
-        plugins = data.get("status", {}).get("plugins", {})
 
-        if plugins:
+        status_object = data.get("status", {})
+        plugins = status_object.get("statuses", status_object.get("plugins", {}))
+
+        if plugins and type(plugins) == list:
+            id_key = "name" if plugins[0].get("name", "") else "id"
             ptprint(f"Found plugins:", "INFO", not self.args.json, indent=4)
             for plugin in plugins:
-                status = plugins.get(plugin).get('level', 'unknown')
+                status = plugin.get('state', 'unknown')
+                name = plugin.get(id_key, "").replace("plugin:", "")
+                if "core:" in name:
+                    continue
+                self._add_to_json({"name": name, "status": status}, "swPlugin")
+                ptprint(f"Name: {name:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
+
+        elif plugins and type(plugins) == dict:
+            ptprint(f"Found plugins:", "INFO", not self.args.json, indent=4)
+            for plugin in plugins.keys():
+                status = plugins.get(plugin, {}).get("level", "unknown")
                 self._add_to_json({"name": plugin, "status": status}, "swPlugin")
                 ptprint(f"Name: {plugin:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
 
@@ -60,15 +73,25 @@ class HttpTest:
         """
         This method retrieves available core plugins and their status, prints them out and adds them to the JSON output
         """
-        cores = data.get("status", {}).get("core", {})
+        if cores := data.get("status", {}).get("core", {}):
+            for core in cores:
+                name = core
+                status = cores.get(core, {}).get("level", "unknown")
+                self._add_to_json({"id": name, "status": status}, "swCorePlugin")
+                ptprint(f"Name: {name:<35} Status: {status:<15}", "INFO",
+                        not self.args.json, indent=8)
+            return
+
+        id_key = "name" if data.get("status", {}).get("statuses", [{}])[0].get("name", "") else "id"
+        cores = [core for core in data.get("status", {}).get("statuses", {}) if "core" in core.get(id_key, "")]
+
 
         if cores:
             ptprint(f"Found core plugins:", "INFO", not self.args.json, indent=4)
             for core in cores:
                 status = cores.get(core).get('level', 'unknown')
                 self._add_to_json({"name": core, "status": status}, "swCorePlugin")
-                ptprint(f"Name: {core:<35} Status: {status:<15}", "INFO",
-                        not self.args.json, indent=8)
+                ptprint(f"Name: {core:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
 
         else:
             ptprint(f"Could not retrieve available core plugins", "OK", not self.args.json, indent=4)
@@ -104,6 +127,7 @@ class HttpTest:
         This method retrieves the Kibana version, prints it out and adds it to the JSON output
         """
         version = data.get("version", {}).get("number", {})
+
 
         if version:
             self._add_to_json({"name": data.get("name", ""), "version": version}, "swKibana")
