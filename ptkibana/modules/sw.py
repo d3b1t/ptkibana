@@ -43,7 +43,6 @@ class HttpTest:
         """
         This method retrieves available plugins and their status, prints them out and adds them to the JSON output
         """
-
         status_object = data.get("status", {})
         plugins = status_object.get("statuses", status_object.get("plugins", {}))
 
@@ -85,13 +84,14 @@ class HttpTest:
         id_key = "name" if data.get("status", {}).get("statuses", [{}])[0].get("name", "") else "id"
         cores = [core for core in data.get("status", {}).get("statuses", {}) if "core" in core.get(id_key, "")]
 
-
         if cores:
             ptprint(f"Found core plugins:", "INFO", not self.args.json, indent=4)
             for core in cores:
-                status = cores.get(core).get('level', 'unknown')
-                self._add_to_json({"name": core, "status": status}, "swCorePlugin")
-                ptprint(f"Name: {core:<35} Status: {status:<15}", "INFO", not self.args.json, indent=8)
+                name = core.get(id_key, "").replace("core:", "")
+                status = core.get('state', 'unknown')
+                self._add_to_json({"id": name, "status": status}, "swCorePlugin")
+                ptprint(f"Name: {name:<35} Status: {status:<15}", "INFO",
+                        not self.args.json, indent=8)
 
         else:
             ptprint(f"Could not retrieve available core plugins", "OK", not self.args.json, indent=4)
@@ -103,31 +103,42 @@ class HttpTest:
         """
         os_properties = data.get("metrics", {}).get("os", {})
 
-        if os_properties:
-            ptprint(f"OS properties:", "INFO", not self.args.json, indent=4)
-            ptprint(f"{'Platform:':<41} {os_properties.get('platform', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Release:':<41} {os_properties.get('platformRelease', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Distro:':<41} {os_properties.get('distro', '')}", "INFO", not self.args.json, indent=8)
-            ptprint(f"{'Distro release:':<41} {os_properties.get('distroRelease', '')}", "INFO", not self.args.json, indent=8)
+        platform = os_properties.get('platform', '')
+        platform_release = os_properties.get('platformRelease', '')
+        distro = os_properties.get('distro', '')
+        distro_release = os_properties.get('distroRelease', '')
 
-            self._add_to_json({
-                    "platform": os_properties.get('platform', ''),
-                    "release": os_properties.get('platformRelease', ''),
-                    "distro": os_properties.get('distro', ''),
-                    "distroRelease": os_properties.get('distroRelease', '')
-                 },
-            "osProperties")
-
-        else:
+        if not any([platform, platform_release, distro_release, distro]):
             ptprint(f"Could not retrieve OS properties", "OK", not self.args.json, indent=4)
+            return
+
+        ptprint(f"OS properties:", "INFO", not self.args.json, indent=4)
+        ptprint(f"{'Platform:':<41} {platform}", "INFO",
+                not self.args.json, indent=8) if platform else None
+        ptprint(f"{'Release:':<41} {platform_release}", "INFO",
+                not self.args.json, indent=8) if platform_release else None
+        ptprint(f"{'Distro:':<41} {distro}", "INFO",
+                not self.args.json, indent=8) if distro else None
+        ptprint(f"{'Distro release:':<41} {distro_release}", "INFO",
+                not self.args.json, indent=8) if distro_release else None
+
+        self._add_to_json({
+                "platform": os_properties.get('platform', ''),
+                "release": os_properties.get('platformRelease', ''),
+                "distro": os_properties.get('distro', ''),
+                "distroRelease": os_properties.get('distroRelease', '')
+             },
+        "osProperties")
 
 
     def _list_kbn_version(self, data: dict) -> None:
         """
         This method retrieves the Kibana version, prints it out and adds it to the JSON output
         """
-        version = data.get("version", {}).get("number", {})
+        version = data.get("version", {})
 
+        if type(version) == dict:
+            version = version.get("number", "")
 
         if version:
             self._add_to_json({"name": data.get("name", ""), "version": version}, "swKibana")
@@ -161,6 +172,7 @@ class HttpTest:
         except ValueError as error_msg:
             ptprint(f"Error communicating with API: {error_msg}", "ERROR", not self.args.json, indent=4)
             return
+
 
         self._list_kbn_version(data)
         self._list_core_plugins(data)
