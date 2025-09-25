@@ -15,7 +15,7 @@ from ptlibs.ptprinthelper import ptprint
 __TESTLABEL__ = "Kibana authentication test"
 
 
-class HttpTest:
+class AuthTest:
     """
     This class tests to see if the host has Kibana has authentication enabled
     """
@@ -76,4 +76,4 @@ class HttpTest:
 
 def run(args, ptjsonlib, helpers, http_client, base_response):
     """Entry point for running the authentication test"""
-    HttpTest(args, ptjsonlib, helpers, http_client, base_response).run()
+    AuthTest(args, ptjsonlib, helpers, http_client, base_response).run()
