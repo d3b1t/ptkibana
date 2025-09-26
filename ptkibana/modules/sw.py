@@ -16,7 +16,7 @@ from json import dumps
 __TESTLABEL__ = "Kibana software enumeration"
 
 
-class HttpTest:
+class SwTest:
     """
     This class enumerates software running on a Kibana host
     """
@@ -182,4 +182,4 @@ class HttpTest:
 
 def run(args, ptjsonlib, helpers, http_client, base_response):
     """Entry point for running the SW enumeration module"""
-    HttpTest(args, ptjsonlib, helpers, http_client, base_response).run()
+    SwTest(args, ptjsonlib, helpers, http_client, base_response).run()

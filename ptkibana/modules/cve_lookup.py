@@ -55,8 +55,10 @@ class Vuln:
         for cve in cve_list:
             cve_id = cve["cve"]["id"]
             cvss_score = self._get_cvss_score(cve)
-            ptprint(f"The host may be vulnerable to {cve_id} \thttps://nvd.nist.gov/vuln/detail/{cve_id} \tCVSS Score: {cvss_score}",
-                    "VULN", not self.args.json, indent=8)
+            msg = f"The host may be vulnerable to {cve_id}"
+            link = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
+            cvss = f"CVSS Score: {cvss_score}"
+            ptprint(f"{msg:<50}{link:<52}{cvss}","VULN", not self.args.json, indent=8)
 
             kbn_node_key = self.helpers.check_node("swKibana")
             if kbn_node_key:
