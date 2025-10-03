@@ -75,8 +75,12 @@ class Vuln:
 
         if response.status_code != HTTPStatus.OK:
             ptprint("Could not reach /api/status endpoint", "OK", not self.args.json, indent=4)
-            ptprint(f"Received response:\n{dumps(response.json(), indent=4)}", "ADDITIONS",
+            try:
+                ptprint(f"Received response:\n{dumps(response.json(), indent=4)}", "ADDITIONS",
                     self.args.verbose, indent=4, colortext=True)
+            except ValueError:
+                ptprint(f"Received response:\n{response.text}", "ADDITIONS",
+                        self.args.verbose, indent=4, colortext=True)
             return ""
 
         try:
@@ -105,7 +109,7 @@ class Vuln:
         kbn_version = self._get_kbn_version()
 
         if not kbn_version:
-            ptprint(f"Could not get Kibana version", "ERROR", not self.args.json, indent=4)
+            ptprint(f"Could not get Kibana version", "OK", not self.args.json, indent=4)
             return
 
         nvd_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName=cpe:2.3:a:elastic:Kibana:{kbn_version}&isVulnerable"
@@ -113,8 +117,8 @@ class Vuln:
         try:
             response = self.http_client.send_request(method="GET", url=nvd_url)
         except requests.exceptions.RequestException as e:
-            self.ptjsonlib.end_error(f"Error retrieving response from NVD database:", details=e,
-                                     condition=self.args.json)
+            ptprint(f"Error retrieving response from NVD database", "ERROR", not self.args.json, indent=4)
+            return
 
         if response.status_code != HTTPStatus.OK:
             ptprint(f"Error retrieving response from NVD database. Received response: {response.status_code} {response.text}",
