@@ -181,7 +181,7 @@ class PtKibana:
             ptprint(f"Error running module '{module_name}': {e}", "ERROR", not self.args.json)
 
 
-def _import_module_from_path(module_name: str) -> ModuleType:
+def _import_module_from_path(module_name: str, file=__file__) -> ModuleType:
     """
     Dynamically imports a Python module from a given file path.
 
@@ -197,7 +197,7 @@ def _import_module_from_path(module_name: str) -> ModuleType:
     Raises:
         ImportError: If the module cannot be found or loaded.
     """
-    module_path = os.path.join(os.path.dirname(__file__), "modules", f"{module_name}.py")
+    module_path = os.path.join(os.path.dirname(file), "modules", f"{module_name}.py")
 
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None:
@@ -208,7 +208,7 @@ def _import_module_from_path(module_name: str) -> ModuleType:
     return module
 
 
-def _get_all_available_modules() -> list:
+def _get_all_available_modules(file=__file__) -> list:
     """
     Returns a list of available Python module names from the 'modules' directory.
 
@@ -216,7 +216,7 @@ def _get_all_available_modules() -> list:
     - Not start with an underscore
     - Have a '.py' extension
     """
-    modules_folder = os.path.join(os.path.dirname(__file__), "modules")
+    modules_folder = os.path.join(os.path.dirname(file), "modules")
     available_modules = [
         f.rsplit(".py", 1)[0]
         for f in sorted(os.listdir(modules_folder))
@@ -259,24 +259,29 @@ def get_help():
             "ptkibana -u https://www.example.com",
         ]},
         {"options": [
-            ["-u",  "--url",                    "<url>",            "Connect to URL"],
-            ["-ts", "--tests",                  "<test>",           "Specify one or more tests to perform:"],
+            ["-u",  "--url",                    "<url>",                            "Connect to URL"],
+            ["-ts", "--tests",                  "<test>",                           "Specify one or more tests to perform:"],
             *_get_available_modules_help(),
-            ["-t", "--threads",                 "<threads>",        "Set thread count (default 10)"],
-            ["-p",  "--proxy",                  "<proxy>",          "Set proxy (e.g. http://127.0.0.1:8080)"],
-            ["-T",  "--timeout",                "",                 "Set timeout (default 10)"],
-            ["-c",  "--cookie",                 "<cookie>",         "Set cookie"],
-            ["-a",  "--user-agent",             "<a>",              "Set User-Agent header"],
-            ["-H",  "--headers",                "<header:value>",   "Set custom header(s)"],
-            ["-r",  "--redirects",              "",                 "Follow redirects (default False)"],
-            ["-C",  "--cache",                  "",                 "Cache HTTP communication (load from tmp in future)"],
-            ["-v",  "--version",                "",                 "Show script version and exit"],
-            ["-vv", "--verbose",                "",                 "Enable verbose mode"],
-            ["-h",  "--help",                   "",                 "Show this help message and exit"],
-            ["-j",  "--json",                   "",                 "Output in JSON format"],
-            ["-U", "--user",                    "",                 "Set user to authenticate as"],
-            ["-P", "--password",                "",                 "Set password to authenticate with"],
-            ["-A", "--api-key",                 "",                 "Set API key to authenticate with"]
+            ["-t", "--threads",                 "<threads>",                        "Set thread count (default 10)"],
+            ["-p",  "--proxy",                  "<proxy>",                          "Set proxy (e.g. http://127.0.0.1:8080)"],
+            ["-T",  "--timeout",                "",                                 "Set timeout (default 10)"],
+            ["-c",  "--cookie",                 "<cookie>",                         "Set cookie"],
+            ["-a",  "--user-agent",             "<a>",                              "Set User-Agent header"],
+            ["-H",  "--headers",                "<header:value>",                   "Set custom header(s)"],
+            ["-r",  "--redirects",              "",                                 "Follow redirects (default False)"],
+            ["-C",  "--cache",                  "",                                 "Cache HTTP communication (load from tmp in future)"],
+            ["-v",  "--version",                "",                                 "Show script version and exit"],
+            ["-vv", "--verbose",                "",                                 "Enable verbose mode"],
+            ["-h",  "--help",                   "",                                 "Show this help message and exit"],
+            ["-j",  "--json",                   "",                                 "Output in JSON format"],
+            ["-U", "--user",                    "",                                 "Set user to authenticate as"],
+            ["-P", "--password",                "",                                 "Set password to authenticate with"],
+            ["-A", "--api-key",                 "",                                 "Set API key to authenticate with"],
+            ["-F", "--file",                    "</path/to/file>",                  "File to read if host is vulnerable to CVE-2015-5531 (default /etc/passwd)"],
+            ["-di", "--dump-index"              "<index1, index2, ...>",            "Specify index to dump with data_dump module"],
+            ["-df", "--dump-field",             "<field1,field2, field3.subfield>", "Specify fields to dump with data_dump module"],
+            ["-o", "--output",                  "<filename>",                       "Specify the name of the file to store structure/data dump to"],
+            ["-ests", "--elasticsearch-tests"   "<test>",                           "Specify one or more tests to perform on Elasticsearch through the Kibana proxy"],
         ]
         }]
 
@@ -306,25 +311,30 @@ def parse_args():
         return url
 
     parser = argparse.ArgumentParser(add_help="False", description=f"{SCRIPTNAME} <options>")
-    parser.add_argument("-u",  "--url",            type=str, required=True)
-    parser.add_argument("-ts", "--tests",          type=lambda s: s.lower(), nargs="+")
-    parser.add_argument("-p",  "--proxy",          type=str)
-    parser.add_argument("-T",  "--timeout",        type=int, default=10)
-    parser.add_argument("-t", "--threads", type=int, default=10)
-    parser.add_argument("-a",  "--user-agent",     type=str, default="Penterep Tools")
-    parser.add_argument("-c",  "--cookie",         type=str)
-    parser.add_argument("-H",  "--headers",        type=ptmisclib.pairs, nargs="+")
-    parser.add_argument("-r",  "--redirects",      action="store_true")
-    parser.add_argument("-C",  "--cache",          action="store_true")
-    parser.add_argument("-j",  "--json",           action="store_true")
-    parser.add_argument("-vv", "--verbose",        action="store_true")
-    parser.add_argument("-v",  "--version",        action='version', version=f'{SCRIPTNAME} {__version__}')
-    parser.add_argument("--socket-address",          type=str, default=None)
-    parser.add_argument("--socket-port",             type=str, default=None)
-    parser.add_argument("--process-ident",           type=str, default=None)
+    parser.add_argument("-u",  "--url",             type=str, required=True)
+    parser.add_argument("-ts", "--tests",           type=lambda s: s.lower(), nargs="+")
+    parser.add_argument("-p",  "--proxy",           type=str)
+    parser.add_argument("-T",  "--timeout",         type=int, default=10)
+    parser.add_argument("-t", "--threads",          type=int, default=10)
+    parser.add_argument("-a",  "--user-agent",      type=str, default="Penterep Tools")
+    parser.add_argument("-c",  "--cookie",          type=str)
+    parser.add_argument("-H",  "--headers",         type=ptmisclib.pairs, nargs="+")
+    parser.add_argument("-r",  "--redirects",       action="store_true")
+    parser.add_argument("-C",  "--cache",           action="store_true")
+    parser.add_argument("-j",  "--json",            action="store_true")
+    parser.add_argument("-vv", "--verbose",         action="store_true")
+    parser.add_argument("-v",  "--version",         action='version', version=f'{SCRIPTNAME} {__version__}')
+    parser.add_argument("--socket-address",         type=str, default=None)
+    parser.add_argument("--socket-port",            type=str, default=None)
+    parser.add_argument("--process-ident",          type=str, default=None)
     parser.add_argument("-U", "--user",             type=str, default=None)
     parser.add_argument("-P", "--password",         type=str, default=None)
     parser.add_argument("-A", "--api-key",          type=str, default=None)
+    parser.add_argument("-F", "--file",             type=str, default="/etc/passwd")
+    parser.add_argument("-di", "--dump-index",      type=lambda f: f.split(","), default="")
+    parser.add_argument("-df", "--dump-field",      type=lambda f: f.split(","), default=None)
+    parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json", default=None)
+    parser.add_argument("-ests", "--elasticsearch-tests",           type=lambda s: s.lower(), nargs="+")
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)
