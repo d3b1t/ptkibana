@@ -51,7 +51,7 @@ class PtKibana:
 
         # Activate ThreadLocalStdout stdout proxy
         self.thread_local_stdout = ThreadLocalStdout(sys.stdout)
-        self.thread_local_stdout.activate()
+
 
     def run(self) -> None:
         """Main method"""
@@ -64,6 +64,12 @@ class PtKibana:
             tests.remove("is_kibana")
 
         self._check_if_target_runs_kibana()
+
+        if "es_proxy" in tests:
+            tests.remove("es_proxy")
+            self.ptthreads.threads(["es_proxy"], self.run_single_module, self.args.threads)
+
+        self.thread_local_stdout.activate()
 
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
