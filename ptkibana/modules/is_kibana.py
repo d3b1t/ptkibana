@@ -45,7 +45,7 @@ class IsKibana:
         """
         Executes the Kibana availability test
 
-        The method looks for the 'kibana' and 'kbn' strings in the reponse body and headers
+        The method looks for the 'kibana' and 'kbn' strings in the response body and headers
 
         If the response body/headers contain the string '̈́kibana' the method prints a message that the host is running Kibana.
         If the response body/headers contain the string 'kbn' the method prints a message that the host might be running Kibana.
