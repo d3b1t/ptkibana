@@ -68,6 +68,8 @@ class ProxyTest:
                     colortext=True)
             return False
 
+        self.ptjsonlib.add_vulnerability("PTV-KIBANA-ES-PROXY")
+
         return True
 
     def _get_all_available_modules(self) -> list:
