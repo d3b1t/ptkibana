@@ -44,34 +44,6 @@ class ProxyTest:
         self.thread_local_stdout = ThreadLocalStdout(sys.stdout)
         self.thread_local_stdout.activate()
 
-    def _verify(self) -> bool:
-        """
-        This method verifies that the /api/console/proxy endpoint is available and we can send ES queries
-
-        :return: True if the proxy is available. False otherwise
-        """
-        headers = self.args.headers.copy()
-        headers.update({"kbn-xsrf": "true"})
-
-        try:
-            self.es_base_response = self.http_client.send_request(url=self.args.url+"api/console/proxy?path=/&method=GET", method="POST",
-                                                     headers=headers)
-        except requests.exceptions.RequestException as error_msg:
-            ptprint(f"Error communicating with /api/console/proxy.", "ERROR", not self.args.json, indent=4)
-            ptprint(f"{error_msg}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
-            return False
-
-
-        if self.es_base_response.status_code != HTTPStatus.OK:
-            ptprint(f"Error communicating with /api/console/proxy.", "ERROR", not self.args.json, indent=4)
-            ptprint(f"Received response: {self.es_base_response.text}", "ADDITIONS", self.args.verbose, indent=4,
-                    colortext=True)
-            return False
-
-        self.ptjsonlib.add_vulnerability("PTV-KIBANA-ES-PROXY")
-
-        return True
-
     def _get_all_available_modules(self) -> list:
         """
         Returns a list of available Python module names from the ptelastic 'modules' directory.
@@ -177,8 +149,6 @@ class ProxyTest:
 
         Then loads modules specified with the -ests/--elasticsearch-tests (all if none specified) and starts them.
         """
-        if not self._verify():
-            return
 
         tests = self.args.elasticsearch_tests or self._get_all_available_modules()
 
