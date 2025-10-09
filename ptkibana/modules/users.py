@@ -1,10 +1,10 @@
 """
-Kibana role enumeration module
+Kibana user enumeration module
 
-This module enumerates available Kibana roles through the /api/security/role endpoint
+This module enumerates available Kibana users through the /internal/security/users endpoint
 
 Contains:
-- RoleEnum to perform the availability test
+- UserEnum to perform the availability test
 - run() function as an entry point for running the test
 """
 
@@ -13,13 +13,14 @@ from http import HTTPStatus
 from xml.etree.ElementPath import prepare_parent
 from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
+from ptelastic.modules.users import Users
 
-__TESTLABEL__ = "Kibana role enumeration"
+__TESTLABEL__ = "Kibana user enumeration"
 
 
-class RoleEnum:
+class UserEnum:
     """
-    This class enumerates available Kibana roles
+    This class enumerates available Kibana users
     """
     def __init__(self, args: object, ptjsonlib: object, helpers: object, http_client: object, base_response: object) -> None:
         self.args = args
@@ -31,38 +32,117 @@ class RoleEnum:
         self.helpers.print_header(__TESTLABEL__)
 
 
-    def _print_roles(self, roles: dict) -> None:
+    def _valid_response(self, response: Response, endpoint: str):
+        if response.status_code != HTTPStatus.OK or (type(response.json()) != list and response.json().get("status", 200) != HTTPStatus.OK):
+            ptprint(f"Could not fetch {endpoint}", "OK", not self.args.json, indent=4)
+            ptprint(f"Details: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
+            return False
+
+        return True
+
+
+    def _check_proxy(self) -> bool:
+        headers = self.args.headers.copy()
+        headers.update({'kbn-xsrf': 'true'})
+        response = self.http_client.send_request(self.args.url+"api/console/proxy?path=_security/user&method=GET", "POST", headers=headers, allow_redirects=False)
+
+        return self._valid_response(response, '/api/console/proxy?path=_security/user')
+
+
+    def _check_privileges(self, role: str, role_privileges: dict, user_properties: dict):
         """
-        This method parses the roles JSON object, prints the found roles and adds them to the JSON output
+        This method enumerates all privileges assigned to a specific role by going through the JSON output provided by the /_security/roles endpoint.
+
+        Adds the privileges to the JSON output
         """
 
+        for available in role_privileges:
+            if available.get("name", "") == role:
+                indices = available.get('indices', "")
+
+                for index in indices:
+                    privileges = index["privileges"]
+                    if index["names"][0] == '*':
+                        index_name = "ALL"
+                    else:
+                        index_name = ', '.join(index['names'])
+
+                    user_properties["roles"][role].append({index_name: privileges})
+
+                    ptprint(f"Privileges on indices: {index_name}: {', '.join(privileges).upper()}; Can edit restricted indices: "
+                        f"{index["allow_restricted_indices"]}","VULN", not self.args.json, indent=12)
+
+
+    def _print_user(self, user_properties: dict, check_roles: bool, role_privileges: dict) -> None:
+        """
+        This method prints the user information to the terminal. If the user has a role of 'superuser', we print it in red
+
+        If we're able to list roles from the /api/security/role endpoint, we enumerate privileges assigned to the roles of a user
+        with the _check_privileges method
+        """
+        ptprint(f"Found user: {user_properties['username']}", "VULN", not self.args.json, indent=4)
+        ptprint(f"Email: {user_properties['email']}", "VULN", not self.args.json, indent=8)
+
+        roles = user_properties['roles']
+
         for role in roles:
-            role_name = role.get("name", "None")
-            ptprint(f"Found role: {role_name}", "INFO", not self.args.json, indent=4)
-            role_node = self.ptjsonlib.create_node_object("kbnRole", properties={"name": role_name})
-            self.ptjsonlib.add_node(role_node)
+            if role == "superuser":
+                ptprint(f"\033[0mRole: \033[31m{role}", "VULN", not self.args.json, indent=8, colortext=True)
+            else:
+                ptprint(f"Role: {role}", "VULN", not self.args.json, indent=8)
+            if check_roles:
+                self._check_privileges(role, role_privileges, user_properties)
+            else:
+                ptprint(f"Could not enumerate privileges","OK", not self.args.json, indent=4)
 
 
     def run(self) -> None:
         """
-        This method executes the Kibana role enumeration
+        This method executes the Kibana user enumeration
 
-        Send an HTTP GET request to the /api/security/role endpoint. If the response is not HTTP 200 OK, the methods exits.
-        Otherwise, the method passes the received JSON object to the _print_roles() method
+        If the /api/console/proxy endpoint is available. The method exits as the rest of the funcionality will be handled by the es_proxy module.
+
+        Send an HTTP GET request to the /internal/security/users endpoint. If the response is not HTTP 200 OK, the methods exits.
+        Otherwise, the method also tries to enumerate available roles with the /api/security/role endpoint.
+        The outputs are then parsed with the print_user() method from ptelastic.modules.users.Users() class
         """
+        done_by_ptelastic = False
 
-        response = self.http_client.send_request(url=self.args.url+"api/security/role", method="GET", headers=self.args.headers)
+        if self.helpers.check_node("user"):
+            done_by_ptelastic = True
 
-        if response.status_code != HTTPStatus.OK or (type(response.json()) != list and response.json().get("status", 200) != HTTPStatus.OK):
-            ptprint("Could not fetch roles", "OK", not self.args.json, indent=4)
-            ptprint(f"Details: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
+        check_roles = False
+        response = self.http_client.send_request(url=self.args.url+"internal/security/users", method="GET", headers=self.args.headers, allow_redirects=False)
+
+        if not self._valid_response(response, "users"):
+            if done_by_ptelastic:
+                ptprint("The user enumeration was done by ptelastic/users module. The Kibana user enumeration failed",
+                        "OK", not self.args.json, indent=4)
             return
 
-        roles = response.json()
+        if done_by_ptelastic:
+            ptprint("The user enumeration was done by ptelastic/users module, but the Kibana user enumeration was also successful",
+                    "VULN", not self.args.json, indent=4)
+            return
 
-        self._print_roles(roles)
+        users = response.json()
+
+        response = self.http_client.send_request(self.args.url+"api/security/role", method="GET",
+                                                 headers=self.args.headers, allow_redirects=False)
+
+        if self._valid_response(response, "roles"):
+           check_roles = True
 
 
-def run(args, ptjsonlib, helpers, http_client, base_response):
-    """Entry point for running the RoleEnum test"""
-    RoleEnum(args, ptjsonlib, helpers, http_client, base_response).run()
+        for entry in users:
+            user = entry.get("username", "")
+            roles = entry.get("roles", [])
+            user_properties = {"username": user, "email": entry["email"], "roles": roles}
+            json_node = self.ptjsonlib.create_node_object("user", properties=user_properties)
+            self.ptjsonlib.add_node(json_node)
+            self._print_user(user_properties, check_roles, response.json())
+
+
+def run(args, ptjsonlib, helpers, http_client, base_response, es_test_results={}):
+    """Entry point for running the UserEnum test"""
+    UserEnum(args, ptjsonlib, helpers, http_client, base_response).run()
