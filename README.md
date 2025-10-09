@@ -7,6 +7,12 @@ The tool:
 - Identifies whether or not Kibana is running on a host
 - Identifies whether it is running on HTTP or HTTPS
 - Identifies whether or not it has authentication enabled
+- Identifies CVEs in the Kibana instance
+- Identifies whether the /api/console/proxy endpoint is available and runs the tool [PTELASTIC](https://github.com/Penterep/ptelastic) through the proxy.
+- Test for CVE-2019-7609
+- Enumerates:
+  - Users and their respective roles
+  - Plugins running on the Kibana instance
 
 ## Installation
 
@@ -82,3 +88,4 @@ responsibility for any damage/harm that this application causes to your
 computer, or your network. Penterep is not responsible for any illegal
 
 or malicious use of this code. Be Ethical!
+
