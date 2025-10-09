@@ -41,14 +41,6 @@ class UserEnum:
         return True
 
 
-    def _check_proxy(self) -> bool:
-        headers = self.args.headers.copy()
-        headers.update({'kbn-xsrf': 'true'})
-        response = self.http_client.send_request(self.args.url+"api/console/proxy?path=_security/user&method=GET", "POST", headers=headers, allow_redirects=False)
-
-        return self._valid_response(response, '/api/console/proxy?path=_security/user')
-
-
     def _check_privileges(self, role: str, role_privileges: dict, user_properties: dict):
         """
         This method enumerates all privileges assigned to a specific role by going through the JSON output provided by the /_security/roles endpoint.
@@ -100,7 +92,7 @@ class UserEnum:
         """
         This method executes the Kibana user enumeration
 
-        If the /api/console/proxy endpoint is available. The method exits as the rest of the funcionality will be handled by the es_proxy module.
+        If users were enumerated by the ptelastic/users module (users in JSON output), the method only tries to reach the /internal/security/users endpoint.
 
         Send an HTTP GET request to the /internal/security/users endpoint. If the response is not HTTP 200 OK, the methods exits.
         Otherwise, the method also tries to enumerate available roles with the /api/security/role endpoint.
