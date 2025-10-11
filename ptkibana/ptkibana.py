@@ -339,7 +339,7 @@ def parse_args():
     parser.add_argument("-F", "--file",             type=str, default="/etc/passwd")
     parser.add_argument("-di", "--dump-index",      type=lambda f: f.split(","), default="")
     parser.add_argument("-df", "--dump-field",      type=lambda f: f.split(","), default=None)
-    parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json", default=None)
+    parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json" if "json" not in o else o, default=None)
     parser.add_argument("-ests", "--elasticsearch-tests",           type=lambda s: s.lower(), nargs="+")
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
