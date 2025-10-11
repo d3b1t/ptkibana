@@ -135,6 +135,6 @@ class UserEnum:
             self._print_user(user_properties, check_roles, response.json())
 
 
-def run(args, ptjsonlib, helpers, http_client, base_response, es_test_results={}):
+def run(args, ptjsonlib, helpers, http_client, base_response):
     """Entry point for running the UserEnum test"""
     UserEnum(args, ptjsonlib, helpers, http_client, base_response).run()
