@@ -86,7 +86,7 @@ class StrucDump:
             return []
 
         fields = []
-        props = mapping["properties"]
+        props = mapping.get("properties", {})
 
         for field_name, field_info in props.items():
             full_name = f"{prefix}{field_name}" if not prefix else f"{prefix}.{field_name}"
@@ -107,12 +107,12 @@ class StrucDump:
         The method then gets all indices with the _get_indices() method and then prints fields in an index by sending a request to
         the /api/index_management/mapping/<index name> endpoint and then retrieving all the fields with the method _get_fields()
 
-        If the -vv/--verbose switch is provided, the method prints hidden indices (indices starting with .) along with all other indices.
+        If the -b/--built-in switch is provided, the method prints hidden indices (indices starting with .) along with all other indices.
         """
         printed = False
 
         for index in self._get_indices():
-            if not self.args.verbose and index.startswith("."):
+            if not self.args.built_in and index.startswith("."):
                 continue
 
             if self._check_json(index):
