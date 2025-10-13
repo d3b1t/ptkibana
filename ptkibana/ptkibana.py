@@ -51,7 +51,7 @@ class PtKibana:
 
         # Activate ThreadLocalStdout stdout proxy
         self.thread_local_stdout = ThreadLocalStdout(sys.stdout)
-        self.thread_local_stdout.activate()
+
 
     def run(self) -> None:
         """Main method"""
@@ -64,6 +64,12 @@ class PtKibana:
             tests.remove("is_kibana")
 
         self._check_if_target_runs_kibana()
+
+        if "es_proxy" in tests:
+            tests.remove("es_proxy")
+            self.ptthreads.threads(["es_proxy"], self.run_single_module, self.args.threads)
+
+        self.thread_local_stdout.activate()
 
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
@@ -282,6 +288,7 @@ def get_help():
             ["-df", "--dump-field",             "<field1,field2, field3.subfield>", "Specify fields to dump with data_dump module"],
             ["-o", "--output",                  "<filename>",                       "Specify the name of the file to store structure/data dump to"],
             ["-ests", "--elasticsearch-tests"   "<test>",                           "Specify one or more tests to perform on Elasticsearch through the Kibana proxy"],
+            ["-b", "--built-in",                "",                                 "Enumerate/dump built-in Elasticsearch indexes"]
         ]
         }]
 
@@ -333,8 +340,9 @@ def parse_args():
     parser.add_argument("-F", "--file",             type=str, default="/etc/passwd")
     parser.add_argument("-di", "--dump-index",      type=lambda f: f.split(","), default="")
     parser.add_argument("-df", "--dump-field",      type=lambda f: f.split(","), default=None)
-    parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json", default=None)
+    parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json" if "json" not in o else o, default=None)
     parser.add_argument("-ests", "--elasticsearch-tests",           type=lambda s: s.lower(), nargs="+")
+    parser.add_argument("-b", "--built-in",         action="store_true")
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)

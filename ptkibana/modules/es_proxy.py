@@ -68,6 +68,8 @@ class ProxyTest:
                     colortext=True)
             return False
 
+        self.ptjsonlib.add_vulnerability("PTV-KIBANA-ES-PROXY")
+
         return True
 
     def _get_all_available_modules(self) -> list:
@@ -175,8 +177,7 @@ class ProxyTest:
 
         Then loads modules specified with the -ests/--elasticsearch-tests (all if none specified) and starts them.
         """
-        if not self._verify():
-            return
+        self._verify()
 
         tests = self.args.elasticsearch_tests or self._get_all_available_modules()
 

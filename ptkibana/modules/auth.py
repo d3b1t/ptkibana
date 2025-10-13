@@ -34,7 +34,7 @@ class AuthTest:
         """
         Executes the Kibana authentication test
 
-        The test sends an HTTP GET request to the /app/home endpoint and if we get an HTTP response of 200 OK, the Kibana instance has authentication disabled.
+        The test sends an HTTP GET request to the /app/home, /app/kibana and /api/status endpoints and if we get an HTTP response of 200 OK, the Kibana instance has authentication disabled.
         If we get a 401 UNAUTHORIZED or a redirect to the /login endpoint, the Kibana instance has authentication enabled.
 
         The method prints if authentication is enabled/disabled and adds a vulnerability to the JSON output if disabled
@@ -43,7 +43,7 @@ class AuthTest:
             ptprint(f"The host has authentication enabled", "OK", not self.args.json, indent=4)
             return
 
-        for endpoint in ["app/home", "app/kibana", "api/saved_objects/_find"]:
+        for endpoint in ["app/home", "app/kibana", "api/status"]:
             ptprint(f"Accessing {self.args.url}{endpoint}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
 
             try:
@@ -61,16 +61,19 @@ class AuthTest:
                     self.ptjsonlib.end_error(f"Error retrieving response", details=error_msg, condition=self.args.json)
 
             if response.status_code == HTTPStatus.UNAUTHORIZED or "/login" in response.headers.get("location", "unknown"):
-                ptprint(f"The host has authentication enabled", "OK", not self.args.json, indent=4)
-                return
+                ptprint(f"The host has authentication enabled for the {endpoint} endpoint", "OK", self.args.verbose, indent=4)
+                continue
 
             if response.status_code == HTTPStatus.OK:
-                ptprint(f"The host has authentication disabled", "VULN", not self.args.json, indent=4)
+                ptprint(f"The host has authentication disabled for the {endpoint} endpoint", "VULN", not self.args.json, indent=4)
                 self.ptjsonlib.add_vulnerability("PTV-WEB-ELASTIC-AUTH")
                 self.ptjsonlib.add_properties({"authentication": "disabled"})
                 return
 
-        ptprint(f"Could not determine whether authentication is enabled or disabled", "ERROR",
+            ptprint(f"Could not reach {endpoint}. Received status code: {response.status_code}", "ADDITIONS",
+                    self.args.verbose, indent=4)
+
+        ptprint(f"The host has authentication enabled", "OK",
                 not self.args.json, indent=4)
 
 
