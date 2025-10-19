@@ -8,11 +8,8 @@ Contains:
 - Vuln class for performing the test
 - run() function as an entry point for running the test
 """
-
-import http
 from http import HTTPStatus
 import requests
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 from json import dumps
 
@@ -93,7 +90,6 @@ class Vuln:
 
         if type(version) == dict:
             version = version.get("number", "")
-
 
         return version
 

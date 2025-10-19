@@ -4,12 +4,8 @@ Kibana software enumeration module
 This module enumerates software running on a Kibana instance
 """
 
-import http
 from http import HTTPStatus
-from http.client import responses
-
 import requests.exceptions
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 from json import dumps
 
@@ -176,7 +172,6 @@ class SwTest:
         except ValueError as error_msg:
             ptprint(f"Error communicating with API: {error_msg}", "ERROR", not self.args.json, indent=4)
             return
-
 
         self._list_kbn_version(data)
         self._list_core_plugins(data)

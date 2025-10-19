@@ -125,7 +125,6 @@ class UserEnum:
         if self._valid_response(response, "roles"):
            check_roles = True
 
-
         for entry in users:
             user = entry.get("username", "")
             roles = entry.get("roles", [])

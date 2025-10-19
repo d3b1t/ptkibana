@@ -3,13 +3,8 @@ Kibana authentication test
 
 This module tests if a Kibana instance has authentication enabled or not
 """
-
-import http
 from http import HTTPStatus
-from http.client import responses
-
 import requests
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 
 __TESTLABEL__ = "Kibana authentication test"

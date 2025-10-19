@@ -3,11 +3,6 @@ Kibana HTTP/S test
 
 This module tests if a Kibana instance is running on HTTPS or HTTP
 """
-
-import http
-from http import HTTPStatus
-from http.client import responses
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 
 __TESTLABEL__ = "Kibana HTTP/S test"
