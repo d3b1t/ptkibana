@@ -19,9 +19,9 @@ along with ptkibana.  If not, see <https://www.gnu.org/licenses/>.
 import argparse
 import importlib
 import os
-import sys;
+import sys
 import threading
-from difflib import IS_LINE_JUNK
+from http import HTTPStatus
 from io import StringIO
 from types import ModuleType
 
@@ -116,7 +116,7 @@ class PtKibana:
             self.ptjsonlib.end_error(f"Error retrieving initial responses:", details=error_msg,
                                      condition=self.args.json)
 
-        return self.base_response.status_code == 200
+        return self.base_response.status_code == HTTPStatus.OK
 
 
     def _fetch_initial_response(self) -> None:
@@ -170,7 +170,7 @@ class PtKibana:
                     )
 
                 except Exception as e:
-                    ptprint(e, "ERROR", not self.args.json)
+                    ptprint(f"{e}", "ERROR", not self.args.json)
                     error = e
                 else:
                     error = None

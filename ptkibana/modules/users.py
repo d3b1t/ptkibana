@@ -32,8 +32,15 @@ class UserEnum:
         self.helpers.print_header(__TESTLABEL__)
 
 
-    def _valid_response(self, response: Response, endpoint: str):
-        if response.status_code != HTTPStatus.OK or (type(response.json()) != list and response.json().get("status", 200) != HTTPStatus.OK):
+    def _valid_response(self, response: Response, endpoint: str) -> bool:
+        try:
+            response = response.json()
+        except ValueError as e:
+            ptprint(f"Could not get JSON from response: {e}", "OK", not self.args.json, indent=4)
+            ptprint(f"Got response: {response.text}", "ADDITIONS", not self.args.json, indent=4, colortext=True)
+            return False
+
+        if response.status_code != HTTPStatus.OK or (type(response) != list and response.get("status", 200) != HTTPStatus.OK):
             ptprint(f"Could not fetch {endpoint}", "OK", not self.args.json, indent=4)
             ptprint(f"Details: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return False
@@ -83,6 +90,7 @@ class UserEnum:
             else:
                 ptprint(f"Role: {role}", "VULN", not self.args.json, indent=8)
             if check_roles:
+                role_privileges = role_privileges.json()
                 self._check_privileges(role, role_privileges, user_properties)
             else:
                 ptprint(f"Could not enumerate privileges","OK", not self.args.json, indent=4)
@@ -117,7 +125,12 @@ class UserEnum:
                     "VULN", not self.args.json, indent=4)
             return
 
-        users = response.json()
+        try:
+            users = response.json()
+        except ValueError as e:
+            ptprint("Could not get JSON from response.", "OK", not self.args.json, indent=4)
+            ptprint(f"Got response: {response.text}", "ADDITIONS", not self.args.json, indent=4, colortext=True)
+            return
 
         response = self.http_client.send_request(self.args.url+"api/security/role", method="GET",
                                                  headers=self.args.headers, allow_redirects=False)
@@ -125,14 +138,13 @@ class UserEnum:
         if self._valid_response(response, "roles"):
            check_roles = True
 
-
         for entry in users:
             user = entry.get("username", "")
             roles = entry.get("roles", [])
             user_properties = {"username": user, "email": entry["email"], "roles": roles}
             json_node = self.ptjsonlib.create_node_object("user", properties=user_properties)
             self.ptjsonlib.add_node(json_node)
-            self._print_user(user_properties, check_roles, response.json())
+            self._print_user(user_properties, check_roles, response)
 
 
 def run(args, ptjsonlib, helpers, http_client, base_response):

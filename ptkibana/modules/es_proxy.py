@@ -3,19 +3,14 @@ Kibana Elasticsearch proxy test
 
 This module tests if a Kibana instance can serve as a proxy for Elasticsearch queries
 """
-
-import http
 import importlib
 import os
 import sys
 import threading
 from http import HTTPStatus
-from http.client import responses
 from io import StringIO
 from types import ModuleType
-
 import requests
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 
 
@@ -46,7 +41,7 @@ class ProxyTest:
 
     def _verify(self) -> bool:
         """
-        This method verifies that the /api/console/proxy endpoint is available and we can send ES queries
+        This method verifies that the /api/console/proxy endpoint is available, and we can send ES queries
 
         :return: True if the proxy is available. False otherwise
         """

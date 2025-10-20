@@ -7,11 +7,6 @@ Contains:
 - IsKibana to perform the availability test
 - run() function as an entry point for running the test
 """
-
-from requests import Response
-from http import HTTPStatus
-from xml.etree.ElementPath import prepare_parent
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 
 __TESTLABEL__ = "Kibana availability test"

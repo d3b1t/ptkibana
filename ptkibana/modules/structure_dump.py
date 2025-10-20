@@ -6,15 +6,7 @@ Contains:
 - run() function as an entry point for running the test
 """
 
-import http
-from http.client import responses
-from mimetypes import inited
-
-from requests import Response
 from http import HTTPStatus
-from xml.etree.ElementPath import prepare_parent
-
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
 import json
 
@@ -23,7 +15,7 @@ __TESTLABEL__ = "Kibana data structure test"
 
 class StrucDump:
     """
-    This class gets all Elasticsearch indices from an Kibana instance and then dumps what fields each index contains
+    This class gets all Elasticsearch indices from a Kibana instance and then dumps what fields each index contains
     """
     def __init__(self, args: object, ptjsonlib: object, helpers: object, http_client: object, base_response: object, kbn: bool) -> None:
         self.args = args
