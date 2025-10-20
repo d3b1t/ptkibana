@@ -160,7 +160,7 @@ class SwTest:
         if response.status_code != HTTPStatus.OK:
             ptprint("Could not reach /api/status endpoint", "OK", not self.args.json, indent=4)
             try:
-                ptprint(f"Received response:\n{dumps(response.json(), indent=4)}", "ADDITIONS",
+                ptprint(f"Received response:\n{response.text}", "ADDITIONS",
                     self.args.verbose, indent=4, colortext=True)
             except ValueError:
                 ptprint(f"Received response:\n{response.text}", "ADDITIONS",

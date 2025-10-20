@@ -121,7 +121,13 @@ class Vuln:
                     "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return
 
-        response = response.json()
+        try:
+            response = response.json()
+        except ValueError as e:
+            ptprint(f"Could not get JSON from response: {e}", "OK", not self.args.json, indent=4)
+            ptprint(f"Got response: {response.text}", "ADDITIONS", not self.args.json, indent=4, colortext=True)
+            return
+
         cve_list = response.get("vulnerabilities", [])
 
         if cve_list:
