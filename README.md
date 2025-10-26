@@ -42,27 +42,38 @@ ptkibana -u htttps://www.example.com/
 
 ## Options
 ```
--u  --url         <url>           Connect to URL
--p  --proxy       <proxy>         Set proxy (e.g. http://127.0.0.1:8080)
--t  --threads     <threads>       Set thread count (default 10)
--T  --timeout                     Set timeout (default 10)
--c  --cookie      <cookie>        Set cookie
--a  --user-agent  <a>             Set User-Agent header
--H  --headers     <header:value>  Set custom header(s)
--r  --redirects                   Follow redirects (default False)
--C  --cache                       Cache HTTP communication (load from tmp in future)
--v  --version                     Show script version and exit
--h  --help                        Show this help message and exit
--j  --json                        Output in JSON format
--ts --tests       <test>          Specify one or more tests to perform:
-                  AUTH
-                  HTTPS
-                  IS_KIBANA
--vv --verbose                     Enable verbose mode
--U  --user                        Set user to authenticate as
--P  --password                    Set password to authenticate with
--A  --api-key                     Set API key to authenticate with
-
+   -u     --url                  <url>                             Connect to URL
+   -ts    --tests                <test>                            Specify one or more tests to perform:
+                                  AUTH                             Kibana authentication test
+                                  CVE-2019-7609                    Kibana CVE-2019-7609 test
+                                  CVE_LOOKUP                       Kibana CVE lookup
+                                  ES_PROXY                         Kibana Elasticsearch proxy test
+                                  HTTPS                            Kibana HTTP/S test
+                                  IS_KIBANA                        Kibana availability test
+                                  STRUCTURE_DUMP                   Kibana data structure test
+                                  SW                               Kibana software enumeration
+                                  USERS                            Kibana user enumeration
+   -t     --threads              <threads>                         Set thread count (default 10)
+   -p     --proxy                <proxy>                           Set proxy (e.g. http://127.0.0.1:8080)
+   -T     --timeout                                                Set timeout (default 10)
+   -c     --cookie               <cookie>                          Set cookie
+   -a     --user-agent           <a>                               Set User-Agent header
+   -H     --headers              <header:value>                    Set custom header(s)
+   -r     --redirects                                              Follow redirects (default False)
+   -C     --cache                                                  Cache HTTP communication (load from tmp in future)
+   -v     --version                                                Show script version and exit
+   -vv    --verbose                                                Enable verbose mode
+   -h     --help                                                   Show this help message and exit
+   -j     --json                                                   Output in JSON format
+   -U     --user                                                   Set user to authenticate as
+   -P     --password                                               Set password to authenticate with
+   -A     --api-key                                                Set API key to authenticate with
+   -F     --file                 </path/to/file>                   File to read if host is vulnerable to CVE-2015-5531 (default /etc/passwd)
+   -di    --dump-index           <index1, index2, ...>             Specify index to dump with data_dump module
+   -df    --dump-field           <field1,field2, field3.subfield>  Specify fields to dump with data_dump module
+   -o     --output               <filename>                        Specify the name of the file to store structure/data dump to
+   -ests  --elasticsearch-tests  <test>                            Specify one or more tests to perform on Elasticsearch through the Kibana proxy
+   -b     --built-in                                               Enumerate/dump built-in (hidden) Elasticsearch indexes
 ```
 
 ## Dependencies
@@ -88,4 +99,5 @@ responsibility for any damage/harm that this application causes to your
 computer, or your network. Penterep is not responsible for any illegal
 
 or malicious use of this code. Be Ethical!
+
 
