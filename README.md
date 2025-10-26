@@ -13,6 +13,7 @@ The tool:
 - Enumerates:
   - Users and their respective roles
   - Plugins running on the Kibana instance
+- Dump ES index structure
 
 ## Installation
 
@@ -99,5 +100,6 @@ responsibility for any damage/harm that this application causes to your
 computer, or your network. Penterep is not responsible for any illegal
 
 or malicious use of this code. Be Ethical!
+
 
 
