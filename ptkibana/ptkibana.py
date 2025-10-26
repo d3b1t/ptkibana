@@ -288,7 +288,7 @@ def get_help():
             ["-df", "--dump-field",             "<field1,field2, field3.subfield>", "Specify fields to dump with data_dump module"],
             ["-o", "--output",                  "<filename>",                       "Specify the name of the file to store structure/data dump to"],
             ["-ests", "--elasticsearch-tests",   "<test>",                           "Specify one or more tests to perform on Elasticsearch through the Kibana proxy"],
-            ["-b", "--built-in",                "",                                 "Enumerate/dump built-in Elasticsearch indexes"]
+            ["-b", "--built-in",                "",                                 "Enumerate/dump built-in (hidden) Elasticsearch indexes"]
         ]
         }]
 
