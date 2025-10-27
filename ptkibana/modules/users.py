@@ -10,10 +10,7 @@ Contains:
 
 from requests import Response
 from http import HTTPStatus
-from xml.etree.ElementPath import prepare_parent
-from ptlibs import ptjsonlib
 from ptlibs.ptprinthelper import ptprint
-from ptelastic.modules.users import Users
 
 __TESTLABEL__ = "Kibana user enumeration"
 
@@ -37,7 +34,7 @@ class UserEnum:
             response = response.json()
         except ValueError as e:
             ptprint(f"Could not get JSON from response: {e}", "OK", not self.args.json, indent=4)
-            ptprint(f"Got response: {response.text}", "ADDITIONS", not self.args.json, indent=4, colortext=True)
+            ptprint(f"Got response: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return False
 
         if response.status_code != HTTPStatus.OK or (type(response) != list and response.get("status", 200) != HTTPStatus.OK):
@@ -129,7 +126,7 @@ class UserEnum:
             users = response.json()
         except ValueError as e:
             ptprint("Could not get JSON from response.", "OK", not self.args.json, indent=4)
-            ptprint(f"Got response: {response.text}", "ADDITIONS", not self.args.json, indent=4, colortext=True)
+            ptprint(f"Got response: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return
 
         response = self.http_client.send_request(self.args.url+"api/security/role", method="GET",
