@@ -12,7 +12,8 @@ from io import StringIO
 from types import ModuleType
 import requests
 from ptlibs.ptprinthelper import ptprint
-
+from ptelastic.modules.is_elastic import IsElastic
+from ptelastic.helpers.helpers import Helpers
 
 __TESTLABEL__ = "Kibana Elasticsearch proxy test"
 
@@ -175,6 +176,23 @@ class ProxyTest:
         self._verify()
 
         tests = self.args.elasticsearch_tests or self._get_all_available_modules()
+
+        if "is_elastic" in tests:
+            tests.remove("is_elastic")
+            try:
+                IsElastic(
+                    args=self.args,
+                    ptjsonlib=self.ptjsonlib,
+                    helpers=self.helpers,
+                    http_client=self.http_client,
+                    base_response=self.base_response,
+                    kbn=True
+                ).run()
+                ptprint(" ", "TEXT", not self.args.json)
+            except IsElastic.NotElasticsearch as e:
+                ptprint(f"{e}", "OK", not self.args.verbose, indent=4)
+                ptprint(" ", "TEXT", not self.args.json)
+                return
 
         self.ptthreads.threads(tests, self.run_single_module, self.args.threads)
 
