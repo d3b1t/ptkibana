@@ -31,13 +31,13 @@ class UserEnum:
 
     def _valid_response(self, response: Response, endpoint: str) -> bool:
         try:
-            response = response.json()
+            json_response = response.json()
         except ValueError as e:
             ptprint(f"Could not get JSON from response: {e}", "OK", not self.args.json, indent=4)
             ptprint(f"Got response: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return False
 
-        if response.status_code != HTTPStatus.OK or (type(response) != list and response.get("status", 200) != HTTPStatus.OK):
+        if response.status_code != HTTPStatus.OK or (type(json_response) != list and json_response.get("status", 200) != HTTPStatus.OK):
             ptprint(f"Could not fetch {endpoint}", "OK", not self.args.json, indent=4)
             ptprint(f"Details: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return False
