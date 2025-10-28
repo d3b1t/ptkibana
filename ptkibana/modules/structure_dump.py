@@ -131,7 +131,10 @@ class StrucDump:
             fields = self._get_fields(mapping=response.get("mappings", {}))
 
             if not fields:
-                ptprint(f"Index {index} has no mappings", "OK", not self.args.json, indent=4)
+                ptprint(f"Found index: {index}. It has no mappings", "VULN", not self.args.json, indent=4)
+                mapping_node = self.ptjsonlib.create_node_object("indexStructure", properties={"mappings": None})
+                self.ptjsonlib.add_node(mapping_node)
+                printed = True
                 continue
 
             mapping_node = self.ptjsonlib.create_node_object("indexStructure", properties=response.get("mappings", {}))

@@ -284,11 +284,11 @@ def get_help():
             ["-P", "--password",                "",                                 "Set password to authenticate with"],
             ["-A", "--api-key",                 "",                                 "Set API key to authenticate with"],
             ["-F", "--file",                    "</path/to/file>",                  "File to read if host is vulnerable to CVE-2015-5531 (default /etc/passwd)"],
-            ["-di", "--dump-index"              "<index1, index2, ...>",            "Specify index to dump with data_dump module"],
+            ["-di", "--dump-index",              "<index1, index2, ...>",            "Specify index to dump with data_dump module"],
             ["-df", "--dump-field",             "<field1,field2, field3.subfield>", "Specify fields to dump with data_dump module"],
             ["-o", "--output",                  "<filename>",                       "Specify the name of the file to store structure/data dump to"],
-            ["-ests", "--elasticsearch-tests"   "<test>",                           "Specify one or more tests to perform on Elasticsearch through the Kibana proxy"],
-            ["-b", "--built-in",                "",                                 "Enumerate/dump built-in Elasticsearch indexes"]
+            ["-ests", "--elasticsearch-tests",   "<test>",                           "Specify one or more tests to perform on Elasticsearch through the Kibana proxy"],
+            ["-b", "--built-in",                "",                                 "Enumerate/dump built-in (hidden) Elasticsearch indexes"]
         ]
         }]
 
@@ -338,7 +338,7 @@ def parse_args():
     parser.add_argument("-P", "--password",         type=str, default=None)
     parser.add_argument("-A", "--api-key",          type=str, default=None)
     parser.add_argument("-F", "--file",             type=str, default="/etc/passwd")
-    parser.add_argument("-di", "--dump-index",      type=lambda f: f.split(","), default="")
+    parser.add_argument("-di", "--dump-index",      type=lambda f: f.split(","), default=None)
     parser.add_argument("-df", "--dump-field",      type=lambda f: f.split(","), default=None)
     parser.add_argument("-o", "--output",           type=lambda o: f"{o}.json" if "json" not in o else o, default=None)
     parser.add_argument("-ests", "--elasticsearch-tests",           type=lambda s: s.lower(), nargs="+")
