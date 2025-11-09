@@ -173,7 +173,8 @@ class ProxyTest:
 
         Then loads modules specified with the -ests/--elasticsearch-tests (all if none specified) and starts them.
         """
-        self._verify()
+        if not self._verify():
+            return
 
         tests = self.args.elasticsearch_tests or self._get_all_available_modules()
 
@@ -185,7 +186,7 @@ class ProxyTest:
                     ptjsonlib=self.ptjsonlib,
                     helpers=self.helpers,
                     http_client=self.http_client,
-                    base_response=self.base_response,
+                    base_response=self.es_base_response,
                     kbn=True
                 ).run()
                 ptprint(" ", "TEXT", not self.args.json)
