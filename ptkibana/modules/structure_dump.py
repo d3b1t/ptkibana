@@ -59,8 +59,9 @@ class StrucDump:
             json_status = 200
 
         if response.status_code != HTTPStatus.OK or json_status != HTTPStatus.OK:
-            ptprint(f"Error fetching indices. Received response: {response.status_code} {json.dumps(json_response,indent=4)}", "ERROR",
+            ptprint(f"Error fetching indices. Received response: {response.status_code}", "ERROR",
                     not self.args.json, indent=4)
+            ptprint(f"Received response: {response.text}", "ADDITIONS", self.args.verbose, indent=4, colortext=True)
             return []
 
         indices = [index.get("name", "unknown") for index in json_response]
@@ -108,8 +109,8 @@ class StrucDump:
                 continue
 
             if self._check_json(index):
-                ptprint(f"The index {index} was already mapped by the ptelastic/structure_dump module", "ADDITIONS",
-                        self.args.verbose, indent=4, colortext=True)
+                ptprint(f"The index {index} was already mapped by the ptelastic/structure_dump module", "VULN",
+                        not self.args.json, indent=4)
                 printed = True
                 continue
 
