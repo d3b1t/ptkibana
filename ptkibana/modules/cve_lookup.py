@@ -66,7 +66,7 @@ class Vuln:
 
     def _get_kbn_version(self) -> str:
         try:
-            response = self.http_client.send_request(url=self.args.url+"api/status", method="GET", headers=self.args.headers, follow_redirects=False)
+            response = self.http_client.send_request(url=self.args.url+"api/status", method="GET", headers=self.args.headers, allow_redirects=False)
         except requests.exceptions.RequestException as error_msg:
             self.ptjsonlib.end_error(f"Error retrieving response", details=error_msg, condition=self.args.json)
 
