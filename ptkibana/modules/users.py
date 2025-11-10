@@ -45,7 +45,7 @@ class UserEnum:
         return True
 
 
-    def _check_privileges(self, role: str, role_privileges: dict, user_properties: dict):
+    def _check_privileges(self, role: str, role_privileges: list, user_properties: dict):
         """
         This method enumerates all privileges assigned to a specific role by going through the JSON output provided by the /_security/roles endpoint.
 
@@ -69,7 +69,7 @@ class UserEnum:
                         f"{index["allow_restricted_indices"]}","VULN", not self.args.json, indent=12)
 
 
-    def _print_user(self, user_properties: dict, check_roles: bool, role_privileges: dict) -> None:
+    def _print_user(self, user_properties: dict, check_roles: bool, role_privileges: list) -> None:
         """
         This method prints the user information to the terminal. If the user has a role of 'superuser', we print it in red
 
@@ -87,7 +87,6 @@ class UserEnum:
             else:
                 ptprint(f"Role: {role}", "VULN", not self.args.json, indent=8)
             if check_roles:
-                role_privileges = role_privileges.json()
                 self._check_privileges(role, role_privileges, user_properties)
             else:
                 ptprint(f"Could not enumerate privileges","OK", not self.args.json, indent=4)
@@ -141,7 +140,7 @@ class UserEnum:
             user_properties = {"username": user, "email": entry["email"], "roles": roles}
             json_node = self.ptjsonlib.create_node_object("user", properties=user_properties)
             self.ptjsonlib.add_node(json_node)
-            self._print_user(user_properties, check_roles, response)
+            self._print_user(user_properties, check_roles, response.json())
 
 
 def run(args, ptjsonlib, helpers, http_client, base_response):
